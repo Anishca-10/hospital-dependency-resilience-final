@@ -1,0 +1,7 @@
+step,request_id,partner,t_s,attempts,retry_count,status,fallback_used,circuit_state,latency_ms,message
+"Insurance transient failure (timeout, timeout, success)",REQ001,insurance,7.09,1:TIMEOUT -> 2:TIMEOUT -> 3:SUCCESS,2,RECOVERED,False,CLOSED,7092.1,Insurance request completed after 2 retries.
+"Laboratory failure: retries exhaust, circuit opens, fallback",REQ002,laboratory,8.61,1:HTTP_502 -> 2:HTTP_502 -> 3:HTTP_502,2,DEGRADED,True,OPEN,1518.6,Laboratory service is temporarily unavailable. Existing records remain accessible. New laboratory results will be synchronized when the service recovers.
+"Laboratory: circuit OPEN -> fail fast, no partner call",REQ003,laboratory,8.61,none (circuit open),0,CIRCUIT_OPEN,True,OPEN,0.0,Laboratory service is temporarily unavailable. Existing records remain accessible. New laboratory results will be synchronized when the service recovers.
+"Partner recovered, but circuit still OPEN (timeout not elapsed)",REQ004,laboratory,8.61,none (circuit open),0,CIRCUIT_OPEN,True,OPEN,0.0,Laboratory service is temporarily unavailable. Existing records remain accessible. New laboratory results will be synchronized when the service recovers.
+Recovery timeout passed -> HALF_OPEN trial succeeds -> CLOSED,REQ005,laboratory,18.9,1:SUCCESS,0,RECOVERED,False,CLOSED,287.7,Laboratory service has recovered. Request completed.
+Normal operation resumed,REQ006,laboratory,19.21,1:SUCCESS,0,SUCCESS,False,CLOSED,307.3,Laboratory request completed.

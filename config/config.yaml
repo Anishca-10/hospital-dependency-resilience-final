@@ -1,0 +1,76 @@
+# Hospital Dependency Resilience Platform - configuration
+# All resilience rules and partner behaviour are read from this file (and can be
+# edited from the Configuration page by an Operations Manager). Synthetic data only.
+# NOTE: saving from the Configuration page rewrites this file WITHOUT comments;
+#       config/config.default.yaml keeps the documented defaults.
+
+server:
+  host: 127.0.0.1
+  port: 5000
+  debug: false
+
+resilience:
+  timeout:                      # seconds, per partner
+    laboratory: 2.0
+    pharmacy: 2.0
+    insurance: 3.0
+    telemedicine: 2.0
+  retry:
+    enabled: true
+    max_attempts: 2             # retries AFTER the first call (so up to 3 calls in total)
+    backoff_seconds: 0.2        # delay before retry 1
+    backoff_multiplier: 2.0     # delay before retry n = backoff_seconds * multiplier^(n-1)
+  circuit_breaker:
+    failure_threshold: 3        # consecutive failed calls before CLOSED -> OPEN
+    recovery_timeout_seconds: 10
+    half_open_max_calls: 1      # trial calls allowed in HALF_OPEN
+
+# Simple baseline = a direct call with a default client timeout and ONE immediate retry.
+# No circuit breaker, no fallback, no error classification, no back-off.
+baseline:
+  timeout_seconds: 10.0
+  max_retries: 1
+
+partners:                       # simulated partner behaviour when healthy
+  laboratory:
+    name: Laboratory
+    latency_ms: 300
+    failure_rate: 0.05
+  pharmacy:
+    name: Pharmacy
+    latency_ms: 400
+    failure_rate: 0.05
+  insurance:
+    name: Insurance
+    latency_ms: 500
+    failure_rate: 0.05
+  telemedicine:
+    name: Telemedicine
+    latency_ms: 350
+    failure_rate: 0.05
+
+# Truthful fallback messages: they never claim the partner operation succeeded.
+fallbacks:
+  laboratory:
+    status: TEMPORARILY_UNAVAILABLE
+    message: Laboratory service is temporarily unavailable. Existing records remain accessible. New laboratory results will be synchronized when the service recovers.
+  pharmacy:
+    status: TEMPORARILY_UNAVAILABLE
+    message: Pharmacy service is temporarily unavailable. Prescription information cannot be refreshed right now.
+  insurance:
+    status: DEGRADED
+    message: Insurance verification is temporarily unavailable. The request has been recorded for later verification.
+  telemedicine:
+    status: TEMPORARILY_UNAVAILABLE
+    message: Telemedicine scheduling is temporarily unavailable. Please try again later.
+
+monitoring:
+  probe_interval_seconds: 15    # background health probe period (live app only)
+  health_window_seconds: 60
+
+experiments:
+  seeds: [11, 12, 13, 14, 15]   # each scenario is repeated with every seed
+  visits_per_scenario: 60       # patient visits per scenario per seed
+  visit_interval_seconds: 5.0
+  target_core_availability_pct: 95.0
+  latency_slo_seconds: 5.0      # secondary metric: visit completes within this time

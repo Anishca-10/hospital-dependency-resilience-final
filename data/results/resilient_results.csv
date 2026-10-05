@@ -1,0 +1,9 @@
+scenario_id,scenario,mode,seeds,visits,core_ok_visits,core_availability_pct,availability_std_pp,within_slo_pct,degraded_visits,avg_visit_ms,p95_visit_ms,cascading_failures,total_requests,successful_requests,failed_requests,request_success_rate_pct,request_failure_rate_pct,errors_propagated_to_core,avg_latency_ms,p95_latency_ms,timeout_count,retry_count,fallback_count,circuit_open_count,fail_fast_count,recovery_time_s
+S1,Normal operation,resilient,5,300,300,100.0,0.0,100.0,0,1683.6,2251.5,0,1200,1200,0,100.0,0.0,0,417.2,523.9,0,59,0,0,0,
+S2,Laboratory high latency,resilient,5,300,300,100.0,0.0,98.33,275,2058.9,3306.4,0,1200,925,275,77.08,22.92,0,511.0,2000.0,100,54,275,90,185,
+S3,Pharmacy intermittent failure,resilient,5,300,300,100.0,0.0,95.67,108,2140.4,4591.4,0,1200,1089,111,90.75,9.25,0,531.3,1796.4,55,175,111,37,74,
+S4,Insurance complete outage,resilient,5,300,300,100.0,0.0,100.0,275,1212.1,1727.5,0,1200,925,275,77.08,22.92,0,299.3,494.7,0,52,275,95,180,
+S5,Telemedicine timeout,resilient,5,300,300,100.0,0.0,98.33,275,2004.2,3248.8,0,1200,925,275,77.08,22.92,0,497.3,2000.0,100,53,275,90,185,
+S6,Partner recovery,resilient,5,300,300,100.0,0.0,100.0,103,1549.3,2145.1,0,1200,1097,103,91.42,8.58,0,383.6,524.3,0,64,103,35,68,3.82
+S7,Insurance transient failures,resilient,5,300,300,100.0,0.0,91.67,161,2145.2,5734.2,0,1200,1039,161,86.58,13.42,0,532.6,1225.0,51,143,161,52,109,
+S8,Laboratory consecutive failures,resilient,5,300,300,100.0,0.0,100.0,150,1596.1,2177.7,0,1200,1050,150,87.5,12.5,0,395.3,524.7,0,66,150,50,100,0.32

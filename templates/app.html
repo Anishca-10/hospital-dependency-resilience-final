@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital Dependency Resilience Platform</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body data-role="{{ user.role }}" data-perms="{{ perms|join(',') }}">
+<header>
+  <div class="logo-container">
+    <div class="logo-icon">H</div>
+    <div class="title-group"><h1>Hospital Resilience Platform</h1><p>Dependency resilience layer &middot; synthetic data</p></div>
+  </div>
+  <nav id="nav">
+    {% for p in pages %}<button class="tab-btn" data-page="{{ p.key }}">{{ p.label }}</button>{% endfor %}
+  </nav>
+  <div class="user-chip"><span><b>{{ user.username }}</b><br>{{ role_label }}</span>
+    <a class="btn btn-secondary btn-sm" href="/logout" style="text-decoration:none">Sign out</a></div>
+</header>
+
+<main>
+{% set keys = pages|map(attribute='key')|list %}
+
+{% if 'dashboard' in keys %}
+<section id="page-dashboard" class="tab-content">
+  <div class="metrics-grid" id="dash-metrics"></div>
+  <div class="card"><div class="card-title"><span>Partner dependencies</span><span class="badge badge-blue">live</span></div>
+    <div class="partner-grid" id="dash-partners"></div></div>
+  <div class="grid-2">
+    <div class="card"><div class="card-title">Recent partner requests</div><div class="table-container scroll">
+      <table><thead><tr><th>Time</th><th>Mode</th><th>Partner</th><th>Status</th><th>Latency</th><th>Retries</th><th>Circuit</th></tr></thead>
+      <tbody id="dash-calls"></tbody></table></div></div>
+    <div class="card"><div class="card-title">Circuit breaker events</div><div class="table-container scroll">
+      <table><thead><tr><th>Time</th><th>Partner</th><th>Transition</th><th>Reason</th></tr></thead>
+      <tbody id="dash-events"></tbody></table></div></div>
+  </div>
+</section>
+{% endif %}
+
+{% if 'patients' in keys %}
+<section id="page-patients" class="tab-content">
+  <div class="banner">Core patient workflow: Registration &rarr; Appointment &rarr; Consultation &rarr; Laboratory &rarr; Pharmacy &rarr; Insurance &rarr; Telemedicine.
+    Core screens keep working when a partner is unavailable; affected steps show an honest status.</div>
+  <div class="card"><div class="card-title">Partner status</div><div class="partner-grid" id="pt-partners"></div></div>
+  <div class="grid-3">
+    <div class="card"><div class="card-title">Patients (synthetic)</div>
+      <div class="list-click scroll" id="pt-list"></div>
+      <hr style="border-color:var(--border-color);margin:.8rem 0">
+      <div class="small" style="margin-bottom:.4rem"><b>Register patient</b></div>
+      <div class="row"><div class="form-group"><input class="form-control" id="pt-new-name" placeholder="Name"></div>
+        <div class="form-group" style="max-width:80px"><input class="form-control" id="pt-new-age" type="number" placeholder="Age"></div></div>
+      <button class="btn btn-sm" id="pt-register">Register</button></div>
+    <div class="card"><div class="card-title">Patient information</div><div id="pt-info" class="small">Select a patient.</div>
+      <hr style="border-color:var(--border-color);margin:.8rem 0">
+      <div class="small"><b>Book appointment</b></div>
+      <div class="row"><div class="form-group"><input class="form-control" id="ap-doctor" value="Dr. Synthetic A"></div>
+        <div class="form-group"><input class="form-control" id="ap-date" value="2026-11-02 10:00"></div></div>
+      <button class="btn btn-sm" id="ap-create">Create appointment</button></div>
+    <div class="card"><div class="card-title">Partner requests</div>
+      <div class="row" style="margin-bottom:.4rem">
+        <button class="btn btn-sm" data-op="laboratory">Laboratory request</button>
+        <button class="btn btn-sm" data-op="pharmacy">Pharmacy check</button>
+        <button class="btn btn-sm" data-op="insurance">Insurance verify</button>
+        <button class="btn btn-sm" data-op="telemedicine">Telemedicine book</button></div>
+      <button class="btn btn-warning btn-sm" id="pt-visit">Run full visit workflow</button>
+      <div id="pt-results"></div></div>
+  </div>
+</section>
+{% endif %}
+
+{% if 'health' in keys %}
+<section id="page-health" class="tab-content">
+  <div class="card"><div class="card-title"><span>Partner health (observed from recent calls &amp; probes)</span>
+    <button class="btn btn-secondary btn-sm" id="probe-all">Probe all now</button></div>
+    <div class="partner-grid" id="health-cards"></div></div>
+</section>
+{% endif %}
+
+{% if 'depmap' in keys %}
+<section id="page-depmap" class="tab-content">
+  <div class="card"><div class="card-title">Service dependency map</div>
+    <div id="depmap"></div>
+    <div class="legend"><span><i class="dot dot-green"></i>Healthy</span><span><i class="dot dot-yellow"></i>Degraded</span>
+      <span><i class="dot dot-red"></i>Unavailable</span><span><i class="dot dot-gray"></i>Circuit open</span>
+      <span><i class="dot dot-blue"></i>Unknown (no recent traffic)</span></div>
+    <div id="depmap-detail" class="small" style="margin-top:.8rem"></div></div>
+</section>
+{% endif %}
+
+{% if 'simulation' in keys %}
+<section id="page-simulation" class="tab-content">
+  <div class="grid-2">
+    <div class="card"><div class="card-title">Failure simulation</div>
+      <div class="row">
+        <div class="form-group"><label>Partner</label><select class="form-control" id="sim-partner">
+          <option value="laboratory">Laboratory</option><option value="pharmacy">Pharmacy</option>
+          <option value="insurance">Insurance</option><option value="telemedicine">Telemedicine</option></select></div>
+        <div class="form-group"><label>Failure mode</label><select class="form-control" id="sim-mode">
+          <option value="NORMAL">Normal</option><option value="HIGH_LATENCY">High Latency</option><option value="TIMEOUT">Timeout</option>
+          <option value="INTERMITTENT">Intermittent Failure</option><option value="CONTINUOUS_FAILURE">Continuous Failure</option>
+          <option value="UNAVAILABLE">Unavailable</option><option value="RECOVERY">Recovery</option></select></div></div>
+      <div class="row">
+        <div class="form-group"><label>Latency (ms)</label><input class="form-control" id="sim-latency" type="number" min="0" placeholder="e.g. 5000"></div>
+        <div class="form-group"><label>Error rate (%)</label><input class="form-control" id="sim-error" type="number" min="0" max="100" placeholder="e.g. 50"></div>
+        <div class="form-group"><label>Duration (s)</label><input class="form-control" id="sim-duration" type="number" min="0" placeholder="blank = until stopped"></div></div>
+      <div class="row"><button class="btn btn-danger" id="sim-start">START SIMULATION</button>
+        <button class="btn btn-secondary" id="sim-stop">STOP SIMULATION</button>
+        <button class="btn" id="sim-recover">RECOVER SERVICE</button></div>
+      <div id="sim-msg" class="small" style="margin-top:.6rem"></div>
+      <hr style="border-color:var(--border-color);margin:1rem 0">
+      <div class="card-title" style="font-size:.9rem">Send test traffic (synthetic test patient)</div>
+      <div class="row">
+        <div class="form-group"><label>Requests</label><input class="form-control" id="tc-count" type="number" value="3" min="1" max="20"></div>
+        <div class="form-group"><label>Mode</label><select class="form-control" id="tc-mode"><option value="resilient">Resilient</option><option value="baseline">Baseline</option></select></div>
+        <button class="btn" id="tc-send">Send</button></div>
+      <div class="small">Real time applies: a 5000 ms latency or a timeout takes real seconds.</div>
+    </div>
+    <div class="card"><div class="card-title">Live partner state</div><div id="sim-state"></div>
+      <div class="card-title" style="font-size:.9rem;margin-top:1rem">Test results</div>
+      <div class="table-container scroll"><table><thead><tr><th>Partner</th><th>Status</th><th>Attempts</th><th>Retries</th><th>Latency</th><th>Circuit</th></tr></thead>
+        <tbody id="tc-results"></tbody></table></div></div>
+  </div>
+</section>
+{% endif %}
+
+{% if 'experiments' in keys %}
+<section id="page-experiments" class="tab-content">
+  <div class="card"><div class="card-title"><span>Baseline vs Resilient experiment (measured)</span>
+    {% if 'experiments_run' in perms %}<button class="btn btn-sm" id="exp-run">Run experiments now</button>{% endif %}</div>
+    <div id="exp-summary" class="small">Loading...</div></div>
+  <div class="card"><div class="card-title">Per-scenario comparison</div><div class="table-container" id="exp-table"></div></div>
+  <div class="card"><div class="card-title">Charts</div><div class="fig-grid" id="exp-figs"></div></div>
+</section>
+{% endif %}
+
+{% if 'logs' in keys %}
+<section id="page-logs" class="tab-content">
+  <div class="card"><div class="card-title"><span>Partner request log</span>
+    <span class="row" style="gap:.4rem"><select class="form-control" id="log-partner" style="width:auto"><option value="">All partners</option>
+      <option>laboratory</option><option>pharmacy</option><option>insurance</option><option>telemedicine</option></select>
+      <button class="btn btn-secondary btn-sm" id="log-refresh">Refresh</button></span></div>
+    <div class="table-container scroll"><table><thead><tr><th>Timestamp</th><th>Request</th><th>Partner</th><th>Operation</th><th>Latency</th><th>Status</th><th>Error</th><th>Retries</th><th>Circuit</th><th>Fallback</th><th>Mode</th></tr></thead>
+    <tbody id="log-calls"></tbody></table></div></div>
+  <div class="grid-2">
+    <div class="card"><div class="card-title">Retry attempts</div><div class="table-container scroll"><table><thead><tr><th>Request</th><th>Partner</th><th>#</th><th>Result</th><th>Latency</th></tr></thead><tbody id="log-attempts"></tbody></table></div></div>
+    <div class="card"><div class="card-title">Circuit &amp; failure events</div><div class="table-container scroll"><table><thead><tr><th>Time</th><th>Partner</th><th>Event</th><th>Detail</th></tr></thead><tbody id="log-events"></tbody></table></div></div>
+  </div>
+</section>
+{% endif %}
+
+{% if 'config' in keys %}
+<section id="page-config" class="tab-content">
+  <div class="card"><div class="card-title"><span>Configurable resilience rules (config/config.yaml)</span><span class="badge badge-blue" id="cfg-mode"></span></div>
+    <div id="cfg-msg"></div>
+    <div class="grid-2">
+      <div><h4>Timeouts (seconds)</h4><div class="row" id="cfg-timeouts"></div>
+        <h4>Retry</h4><div class="row">
+          <div class="form-group"><label>Max retry attempts (0-5)</label><input class="form-control" id="cfg-retry-attempts" type="number"></div>
+          <div class="form-group"><label>Backoff (s)</label><input class="form-control" id="cfg-retry-backoff" type="number" step="0.05"></div></div>
+        <h4>Circuit breaker</h4><div class="row">
+          <div class="form-group"><label>Failure threshold (1-20)</label><input class="form-control" id="cfg-cb-threshold" type="number"></div>
+          <div class="form-group"><label>Recovery timeout (s)</label><input class="form-control" id="cfg-cb-recovery" type="number" step="0.5"></div></div></div>
+      <div><h4>Simulated partner behaviour</h4><div id="cfg-partners"></div></div>
+    </div>
+    {% if 'config_write' in perms %}<button class="btn" id="cfg-save">Save configuration</button>{% endif %}
+  </div>
+</section>
+{% endif %}
+
+{% if 'validation' in keys %}
+<section id="page-validation" class="tab-content">
+  <div class="banner warn"><b>Prototype/simulated user validation.</b> This is a lightweight questionnaire for people trying the prototype with synthetic data; it is not a hospital stakeholder study.</div>
+  <div class="grid-2">
+    <div class="card"><div class="card-title">Questionnaire</div><div id="val-form"></div>
+      <button class="btn" id="val-submit">Submit feedback</button><div id="val-msg" class="small" style="margin-top:.5rem"></div></div>
+    {% if 'validation_view' in perms %}<div class="card"><div class="card-title"><span>Collected responses</span>
+      <button class="btn btn-secondary btn-sm" id="val-regen">Regenerate summary file</button></div><div id="val-summary" class="small">Loading...</div></div>{% endif %}
+  </div>
+</section>
+{% endif %}
+
+{% if 'reports' in keys %}
+<section id="page-reports" class="tab-content">
+  <div class="grid-2" style="grid-template-columns: 260px 1fr;">
+    <div class="card"><div class="card-title">Documents</div><div class="list-click" id="rep-list"></div></div>
+    <div class="card"><div class="doc-body" id="rep-body">Select a document.</div></div>
+  </div>
+</section>
+{% endif %}
+</main>
+<footer>{{ disclaimer }}</footer>
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+{
+  "experiment_id": "EXP-20261005-093738",
+  "timestamp": "2026-10-05 09:37:38",
+  "baseline_core_availability_pct": 59.33,
+  "resilient_core_availability_pct": 100.0,
+  "target_core_availability_pct": 95.0,
+  "improvement_pp": 40.67,
+  "target_achieved": true,
+  "baseline_within_slo_pct": 45.92,
+  "resilient_within_slo_pct": 98.0,
+  "latency_slo_s": 5.0,
+  "baseline_scenarios_meeting_target": 2,
+  "resilient_scenarios_meeting_target": 8,
+  "n_scenarios": 8,
+  "n_seeds": 5,
+  "seeds": [
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "visits_per_scenario": 60,
+  "visit_interval_s": 5.0,
+  "total_visits_per_mode": 2400,
+  "config": {
+    "timeouts": {
+      "laboratory": 2.0,
+      "pharmacy": 2.0,
+      "insurance": 3.0,
+      "telemedicine": 2.0
+    },
+    "retry_max_attempts": 2,
+    "retry_backoff_s": 0.2,
+    "cb_threshold": 3,
+    "cb_recovery_s": 10.0,
+    "baseline_timeout_s": 10.0,
+    "baseline_max_retries": 1
+  }
+}
